@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Didactis — Plataforma Pedagógica</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <aside class="sidebar">
+      <div class="logo">
+        <h2>Didactis 🎓</h2>
+        <span>Assistente Escolar</span>
+      </div>
+
+      <nav class="menu">
+        <button class="menu-item active" data-target="view-inicio">
+          <span class="icon">🏠</span> Início
+        </button>
+        <button class="menu-item" data-target="view-capas">
+          <span class="icon">📄</span> Capas de Portfólio
+        </button>
+        <button class="menu-item" data-target="relatorios-view">
+          <span class="icon">📝</span> Relatórios Descritivos
+        </button>
+        <button class="menu-item" data-target="view-ia">
+          <span class="icon">🤖</span> Assistente de IA
+        </button>
+      </nav>
+    </aside>
+
+    <main class="main-content">
+
+      <section id="view-inicio" class="view active">
+        <header class="page-header">
+          <h1>Bem-vinda ao Didactis! 👋</h1>
+          <p>Selecione uma ferramenta no menu ou escolha uma das opções abaixo para começar:</p>
+        </header>
+
+        <div class="cards-grid">
+          <div class="card" onclick="navegarPara('view-capas')">
+            <span class="card-icon">📄</span>
+            <h3>Gerar Capas de Portfólio</h3>
+            <p>Crie capas personalizadas em lote com nome dos alunos, turma e molduras em PDF.</p>
+            <span class="card-link">Acessar ferramenta →</span>
+          </div>
+
+          <div class="card" onclick="navegarPara('relatorios-view')">
+            <span class="card-icon">📝</span>
+            <h3>Relatórios Descritivos</h3>
+            <p>Gere pareceres pedagógicos individuais formatados em PDF para cada estudante.</p>
+            <span class="card-link">Acessar ferramenta →</span>
+          </div>
+
+          <div class="card" onclick="navegarPara('view-ia')">
+            <span class="card-icon">🤖</span>
+            <h3>Assistente Pedagógico IA</h3>
+            <p>Gere textos para pareceres, atividades alinhadas à BNCC e ilustrações para colorir.</p>
+            <span class="card-link">Em breve →</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-capas" class="view">
+        <header class="page-header">
+          <h1>Gerador de Capas de Portfólio</h1>
+          <p>Preencha os dados abaixo para gerar as capas em lote em um único arquivo PDF.</p>
+        </header>
+
+        <form id="capaForm" class="form-container">
+          <div class="form-group">
+            <label for="escola">Nome da Escola:</label>
+            <input type="text" id="escola" value="ESCOLA MUNICIPAL ARLETE GÓIS" required>
+          </div>
+
+          <div class="form-group">
+            <label for="professora">Nome da Professora:</label>
+            <input type="text" id="professora" value="Eliene da Silva Santos" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="turma">Turma:</label>
+              <input type="text" id="turma" value="5º Ano" required>
+            </div>
+            <div class="form-group">
+              <label for="unidade">Unidade:</label>
+              <input type="text" id="unidade" value="1ª UNIDADE" required>
+            </div>
+            <div class="form-group">
+              <label for="anoLetivo">Ano Letivo:</label>
+              <input type="text" id="anoLetivo" value="2027" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="alunos">Lista de Alunos (um nome por linha):</label>
+            <textarea id="alunos" rows="5" placeholder="Digite o nome dos alunos aqui..." required>Ana Souza
+Bruno Lima
+Carla Dias
+Daniel Oliveira</textarea>
+          </div>
+
+          <button type="submit" id="btnGerar">🚀 Gerar Capas em PDF</button>
+        </form>
+      </section>
+
+      <section id="relatorios-view" class="view">
+        <header class="page-header">
+          <h1>Relatório Descritivo Individual</h1>
+          <p>Gere o parecer pedagógico formatado em PDF para cada estudante.</p>
+        </header>
+
+        <form id="relatorioForm" class="form-container">
+          <div class="form-group">
+            <label for="relatorioEscola">Nome da Escola:</label>
+            <input type="text" id="relatorioEscola" value="ESCOLA MUNICIPAL ARLETE GÓIS" required>
+          </div>
+
+          <div class="form-group">
+            <label for="relatorioProfessora">Nome da Professora:</label>
+            <input type="text" id="relatorioProfessora" value="Eliene da Silva Santos" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="relatorioAluno">Nome do Aluno:</label>
+              <input type="text" id="relatorioAluno" placeholder="Ex: Ana Souza" required>
+            </div>
+
+            <div class="form-group">
+              <label for="relatorioTurma">Turma:</label>
+              <input type="text" id="relatorioTurma" value="5º Ano" required>
+            </div>
+
+            <div class="form-group">
+              <label for="relatorioUnidade">Unidade / Período:</label>
+              <input type="text" id="relatorioUnidade" value="1ª UNIDADE" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="relatorioTexto">Parecer Pedagógico / Texto do Relatório:</label>
+            <textarea id="relatorioTexto" rows="10" placeholder="Digite ou cole aqui o parecer do aluno..." required></textarea>
+          </div>
+
+          <button type="submit" id="btnGerarRelatorio">📄 Gerar Relatório em PDF</button>
+        </form>
+      </section>
+
+      <section id="view-ia" class="view">
+        <header class="page-header">
+          <h1>Assistente Pedagógico com IA 🤖</h1>
+          <p>Escolha o modo de uso abaixo: converse livremente ou use o formulário rápido de pareceres.</p>
+        </header>
+
+        <div class="ia-tab-buttons" style="display: flex; gap: 10px; margin-bottom: 20px;">
+          <button type="button" class="ia-tab-btn active" onclick="alternarModoIA('chat')">💬 Conversa Livre</button>
+          <button type="button" class="ia-tab-btn" onclick="alternarModoIA('form')">📝 Gerador de Parecer (Formulário)</button>
+        </div>
+
+        <div id="modo-ia-chat" class="modo-ia-content">
+          <div class="chat-container">
+            <div id="chatMessages" class="chat-messages">
+              <div class="msg-ai">
+                Olá, Professora! 👋 Sou seu Assistente Didactis. Como posso ajudar nas suas aulas do 5º ano hoje?
+              </div>
+            </div>
+
+            <form id="chatForm" class="chat-form">
+              <input type="text" id="chatInput" class="chat-input" placeholder="Digite sua dúvida ou mensagem aqui..." required autocomplete="off">
+              <button type="submit" id="btnSendChat" class="btn-send-chat">Enviar 🚀</button>
+            </form>
+          </div>
+        </div>
+
+        <div id="modo-ia-form" class="modo-ia-content" style="display: none;">
+          <form id="iaForm" class="form-container">
+            <div class="form-group">
+              <label for="iaAluno">Nome do Aluno:</label>
+              <input type="text" id="iaAluno" placeholder="Ex: Ana Souza" required>
+            </div>
+
+            <div class="form-group">
+              <label for="iaPontosFortes">Pontos Fortes e Avanços Observados:</label>
+              <textarea id="iaPontosFortes" rows="3" placeholder="Ex: Leitura fluida, muito participativa e excelente relacionamento em grupo." required></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="iaObservacoes">Aspectos a Desenvolver / Atenção Pedagógica:</label>
+              <textarea id="iaObservacoes" rows="3" placeholder="Ex: Precisa de mais atenção na resolução de problemas matemáticos." required></textarea>
+            </div>
+
+            <button type="submit" id="btnGerarIA">✨ Gerar Parecer com IA</button>
+          </form>
+
+          <div id="iaResultadoBox" class="form-container" style="margin-top: 25px; display: none;">
+            <div class="form-group">
+              <label for="iaTextoGerado">Parecer Gerado (Editável):</label>
+              <textarea id="iaTextoGerado" rows="8"></textarea>
+            </div>
+            <button type="button" id="btnCopiarIA">📋 Copiar Parecer</button>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

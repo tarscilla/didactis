@@ -1,19 +1,60 @@
+require('dotenv').config();
+
 const express = require('express');
 const PDFDocument = require('pdfkit');
 const cors = require('cors');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const app = express();
+
 app.use(cors());
 app.use(express.json());
+app.use(express.static('public'));
 
-// Rota de teste para a raiz do servidor (Health Check)
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
 app.get('/', (req, res) => {
   res.send('API Didactis está online e funcionando!');
 });
 
-// Rota POST principal que recebe os dados do formulário e gera as capas
+app.post('/api/ia/chat', async (req, res) => {
+  try {
+    const { mensagem } = req.body || {};
+    const model = genAI.getGenerativeModel({ 
+      model: 'gemini-1.5-flash',
+      systemInstruction: `Você é a IA Assistente Pedagógica do Didactis, especializada em auxiliar professores do 5º Ano do Ensino Fundamental. Ajude a Profª Eliene da Silva Santos a criar pareceres, planos de aula e dinâmicas.`
+    });
+
+    const result = await model.generateContent(mensagem);
+    res.json({ resposta: result.response.text() });
+  } catch (error) {
+    console.error('Erro no Chat IA:', error);
+    res.status(500).json({ error: 'Erro ao processar mensagem com a IA.' });
+  }
+});
+
+app.post('/api/ia/gerar-texto', async (req, res) => {
+  try {
+    const { aluno, pontosFortes, observacoes } = req.body || {};
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+    const prompt = `Você é um assistente pedagógico especialista no 5º ano do Ensino Fundamental.
+Escreva um parecer descritivo empático, construtivo e alinhado à BNCC para o/a estudante: ${aluno || 'Estudante'}.
+
+Pontos fortes e avanços observados: ${pontosFortes}
+Aspectos a desenvolver / observações: ${observacoes}
+
+Gere um texto fluido em 2 a 3 parágrafos bem articulados, sem títulos genéricos.`;
+
+    const result = await model.generateContent(prompt);
+    res.json({ texto: result.response.text() });
+  } catch (error) {
+    console.error('Erro no Gerador de Parecer:', error);
+    res.status(500).json({ error: 'Erro ao gerar parecer.' });
+  }
+});
+
 app.post('/api/capas/gerar-pdf', (req, res) => {
-  // Extrai os dados enviados na requisição ou aplica valores padrão de fallback
   const {
     escola = "ESCOLA MUNICIPAL ARLETE GÓIS",
     professora = "Eliene da Silva Santos",
@@ -23,7 +64,6 @@ app.post('/api/capas/gerar-pdf', (req, res) => {
     alunos = ["Ana Souza", "Bruno Lima", "Carla Dias", "Daniel Oliveira"]
   } = req.body || {};
 
-  // Configura os cabeçalhos para o navegador reconhecer o fluxo de PDF
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Disposition', 'inline; filename=capas_portfolio.pdf');
 
@@ -33,11 +73,9 @@ app.post('/api/capas/gerar-pdf', (req, res) => {
   alunos.forEach((nomeAluno, index) => {
     if (index > 0) doc.addPage();
 
-    // 1. Moldura externa dupla com cantos arredondados
     doc.roundedRect(25, 25, 545, 792, 10).lineWidth(2).stroke('#2e5b88');
     doc.roundedRect(30, 30, 535, 782, 8).lineWidth(0.8).stroke('#6ba3d6');
 
-    // 2. Cabeçalho institucional
     doc.font('Helvetica-Bold')
        .fontSize(16)
        .fillColor('#1a365d')
@@ -51,7 +89,6 @@ app.post('/api/capas/gerar-pdf', (req, res) => {
        .text(`TURMA: ${turma}   |   ANO LETIVO: ${anoLetivo}`, { align: 'center' })
        .moveDown(1.5);
 
-    // 3. Título principal do documento
     doc.font('Helvetica-Bold')
        .fontSize(22)
        .fillColor('#2b6cb0')
@@ -64,7 +101,6 @@ app.post('/api/capas/gerar-pdf', (req, res) => {
        .text(`— ${unidade.toUpperCase()} —`, { align: 'center' })
        .moveDown(2);
 
-    // 4. Espaço delimitado para fotos ou ilustrações
     doc.roundedRect(137, 240, 320, 260, 12)
        .dash(4, { space: 6 })
        .lineWidth(1.5)
@@ -76,7 +112,6 @@ app.post('/api/capas/gerar-pdf', (req, res) => {
        .fillColor('#a0aec0')
        .text('[ Espaço para Foto ou Desenho do Aluno ]', 137, 365, { width: 320, align: 'center' });
 
-    // 5. Cartão de destaque para o nome do estudante
     doc.roundedRect(60, 540, 475, 70, 8)
        .fillAndStroke('#f7fafc', '#cbd5e0');
 
