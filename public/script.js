@@ -1,3 +1,7 @@
+if (window.lucide) {
+  lucide.createIcons();
+}
+
 const menuItems = document.querySelectorAll('.menu-item');
 const views = document.querySelectorAll('.view');
 
@@ -108,7 +112,8 @@ document.getElementById('relatorioForm').addEventListener('submit', async (e) =>
     alert('Rota do backend ainda não configurada. Aguardando modelo de layout!');
     console.error(error);
   } finally {
-    btn.innerText = '📄 Gerar Relatório em PDF';
+    btn.innerHTML = '<i data-lucide="file-down"></i> Gerar Relatório em PDF';
+    lucide.createIcons();
     btn.disabled = false;
   }
 });
@@ -150,6 +155,12 @@ chatForm.addEventListener('submit', async (e) => {
   adicionarMensagem(mensagem, 'user');
   btnSendChat.disabled = true;
 
+  const loadingDiv = document.createElement('div');
+  loadingDiv.classList.add('msg-ai');
+  loadingDiv.textContent = 'Pensando...';
+  chatMessages.appendChild(loadingDiv);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+
   try {
     const res = await fetch('/api/ia/chat', {
       method: 'POST',
@@ -157,11 +168,12 @@ chatForm.addEventListener('submit', async (e) => {
       body: JSON.stringify({ mensagem })
     });
     const data = await res.json();
-    adicionarMensagem(data.resposta || data.error || 'Sem resposta.', 'ai');
+    loadingDiv.textContent = data.resposta || data.error || 'Sem resposta.';
   } catch (err) {
-    adicionarMensagem('Erro ao conectar com o servidor.', 'ai');
+    loadingDiv.textContent = 'Servidor desconectado. Confira se o node index.js está rodando no terminal e dê F5 na página.';
   } finally {
     btnSendChat.disabled = false;
+    chatMessages.scrollTop = chatMessages.scrollHeight;
   }
 });
 
@@ -191,8 +203,8 @@ async function solicitarQuestoes() {
   } catch (err) {
     alert(`Não foi possível gerar as questões: ${err.message}`);
   } finally {
-    btn.innerText = '✨ Gerar Questões';
-    btn.disabled = false;
+    btn.innerHTML = '<i data-lucide="sparkles"></i> Gerar Questões';
+    lucide.createIcons();
     if (btnRefazer) btnRefazer.disabled = false;
   }
 }
@@ -237,7 +249,8 @@ document.getElementById('iaForm').addEventListener('submit', async (e) => {
   } catch (err) {
     alert(`Não foi possível gerar o texto: ${err.message}`);
   } finally {
-    btn.innerText = '✨ Gerar Texto do Relatório';
+    btn.innerHTML = '<i data-lucide="sparkles"></i> Gerar Texto do Relatório';
+    lucide.createIcons();
     btn.disabled = false;
   }
 });

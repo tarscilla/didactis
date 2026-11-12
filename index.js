@@ -14,24 +14,79 @@ app.use(express.json());
 app.use(express.static('public'));
 
 async function chamarGemini(prompt, systemInstruction = '') {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error('Chave GEMINI_API_KEY não encontrada no .env');
-
-  const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent';
-  const body = { contents: [{ parts: [{ text: prompt }] }] };
-  if (systemInstruction) {
-    body.systemInstruction = { parts: [{ text: systemInstruction }] };
+  const groqKey = process.env.GROQ_API_KEY;
+  if (!groqKey) {
+    throw new Error('Chave GROQ_API_KEY não encontrada no .env');
   }
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-    body: JSON.stringify(body)
+  const modelsRes = await fetch('https://api.groq.com/openai/v1/models', {
+    headers: { 'Authorization': `Bearer ${groqKey}` }
   });
+  const modelsData = await modelsRes.json();
 
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.error?.message || `Erro HTTP ${response.status}`);
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || 'Sem resposta da IA.';
+  if (!modelsRes.ok) {
+    throw new Error(modelsData.error?.message || `Erro ao listar modelos Groq (HTTP ${modelsRes.status})`);
+  }
+
+  const modelosTexto = (modelsData.data || [])
+    .map((m) => m.id)
+    .filter((id) => !/whisper|guard|tts|embed|vision|orpheus/i.test(id));
+
+  if (modelosTexto.length === 0) {
+    throw new Error('Nenhum modelo de texto disponível nesta chave da Groq.');
+  }
+
+  const prioridades = [
+    /llama-3\.1-8b-instant/i,
+    /llama-4/i,
+    /llama.*70b|versatile/i,
+    /gemma/i,
+    /qwen/i
+  ];
+
+  const candidatos = [
+    ...prioridades.flatMap((regex) => modelosTexto.filter((id) => regex.test(id))),
+    ...modelosTexto
+  ].filter((id, idx, arr) => arr.indexOf(id) === idx);
+
+  const messages = [];
+  if (systemInstruction) {
+    messages.push({ role: 'system', content: systemInstruction });
+  }
+  messages.push({ role: 'user', content: prompt });
+
+  let ultimoErro = 'Limite temporário atingido nos modelos da Groq.';
+
+  for (const modelo of candidatos) {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${groqKey}`
+      },
+      body: JSON.stringify({
+        model: modelo,
+        messages,
+        temperature: 0.7
+      })
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      return data.choices?.[0]?.message?.content || 'Sem resposta da IA.';
+    }
+
+    ultimoErro = data.error?.message || `Erro na Groq (HTTP ${response.status})`;
+
+    if ([400, 404, 429, 503].includes(response.status)) {
+      continue;
+    }
+
+    throw new Error(ultimoErro);
+  }
+
+  throw new Error(ultimoErro);
 }
 
 app.post('/api/ia/chat', async (req, res) => {
@@ -187,6 +242,19 @@ app.post('/api/capas/gerar-pdf', (req, res) => {
 
   doc.end();
 });
+
+function enviarPdfBuffer(res, doc, filename) {
+  const chunks = [];
+  doc.on('data', (chunk) => chunks.push(chunk));
+  doc.on('end', () => {
+    const pdfBuffer = Buffer.concat(chunks);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+    res.send(pdfBuffer);
+  });
+  doc.end();
+}
 
 app.post('/api/relatorios/gerar-pdf', (req, res) => {
   const {
