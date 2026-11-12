@@ -13,34 +13,15 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
-app.get('/', (req, res) => {
-  res.send('API Didactis está online e funcionando!');
-});
-
-app.post('/api/ia/chat', async (req, res) => {
-  try {
-    const { mensagem } = req.body || {};
-    const model = genAI.getGenerativeModel({ 
-      model: 'gemini-1.5-flash',
-      systemInstruction: `Você é a IA Assistente Pedagógica do Didactis, especializada em auxiliar professores do 5º Ano do Ensino Fundamental. Ajude a Profª Eliene da Silva Santos a criar pareceres, planos de aula e dinâmicas.`
-    });
-
-    const result = await model.generateContent(mensagem);
-    res.json({ resposta: result.response.text() });
-  } catch (error) {
-    console.error('Erro no Chat IA:', error);
-    res.status(500).json({ error: 'Erro ao processar mensagem com a IA.' });
-  }
-});
 async function chamarGemini(prompt, systemInstruction = '') {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error('Chave GEMINI_API_KEY não encontrada no .env');
 
-  const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+  const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent';
   const body = { contents: [{ parts: [{ text: prompt }] }] };
-  if (systemInstruction) body.systemInstruction = { parts: [{ text: systemInstruction }] };
+  if (systemInstruction) {
+    body.systemInstruction = { parts: [{ text: systemInstruction }] };
+  }
 
   const response = await fetch(url, {
     method: 'POST',
@@ -53,37 +34,48 @@ async function chamarGemini(prompt, systemInstruction = '') {
   return data.candidates?.[0]?.content?.parts?.[0]?.text || 'Sem resposta da IA.';
 }
 
-function enviarPdfBuffer(res, doc, filename) {
-  const chunks = [];
-  doc.on('data', (chunk) => chunks.push(chunk));
-  doc.on('end', () => {
-    const pdfBuffer = Buffer.concat(chunks);
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `inline; filename=${filename}`);
-    res.setHeader('Content-Length', pdfBuffer.length);
-    res.end(pdfBuffer);
-  });
-  doc.end();
-}
-
 app.post('/api/ia/chat', async (req, res) => {
   try {
     const { mensagem } = req.body || {};
-    const instrucao = 'Você é a IA Assistente Pedagógica do Didactis, especializada no 5º Ano do Ensino Fundamental. Ajude a Profª Eliene da Silva Santos com planos de aula alinhados à BNCC, atividades e pareceres.';
+    const instrucao = 'Você é a IA Assistente Pedagógica do Didactis, especializada no 5º Ano do Ensino Fundamental. Ajude a Profª Eliene da Silva Santos com planos de aula alinhados à BNCC, atividades e relatórios.';
     const resposta = await chamarGemini(mensagem, instrucao);
     res.json({ resposta });
   } catch (error) {
+    console.error('Erro no Chat IA:', error.message);
     res.json({ resposta: `⚠️ Erro na IA: ${error.message}` });
+  }
+});
+
+app.post('/api/ia/gerar-texto', async (req, res) => {
+  try {
+    const { aluno, pontosFortes, observacoes } = req.body || {};
+    const prompt = `Escreva um parecer descritivo empático e alinhado à BNCC para o(a) aluno(a) do 5º ano: ${aluno || 'Estudante'}.\nPontos fortes: ${pontosFortes}\nAspectos a desenvolver: ${observacoes}\nGere 2 a 3 parágrafos fluidos, sem títulos.`;
+    const texto = await chamarGemini(prompt);
+    res.json({ texto });
+  } catch (error) {
+    console.error('Erro ao gerar texto:', error.message);
+    res.status(500).json({ error: error.message });
   }
 });
 
 app.post('/api/ia/gerar-questoes', async (req, res) => {
   try {
     const { materia, tema, quantidade, tipo } = req.body || {};
-    const prompt = `Crie ${quantidade || 5} questões de avaliação para o 5º Ano do Ensino Fundamental.\nDisciplina: ${materia}\nTema: ${tema}\nFormato: ${tipo}\nNumere as questões e inclua um GABARITO PARA A PROFESSORA no final.`;
+
+    const prompt = `Crie ${quantidade || 5} questões de avaliação para uma turma de 5º Ano do Ensino Fundamental.
+Disciplina: ${materia || 'Língua Portuguesa'}
+Tema/Conteúdo: ${tema}
+Formato: ${tipo || 'Mista (objetivas e dissertativas)'}
+
+Regras:
+- Linguagem clara, adequada para alunos de 10 a 11 anos e alinhada à BNCC.
+- Numere cada questão (1, 2, 3...).
+- No final, coloque uma seção separada chamada "GABARITO PARA A PROFESSORA" com as respostas esperadas.`;
+
     const questoes = await chamarGemini(prompt);
     res.json({ questoes });
   } catch (error) {
+    console.error('Erro ao gerar questões:', error.message);
     res.status(500).json({ error: error.message });
   }
 });

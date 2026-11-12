@@ -248,3 +248,51 @@ document.getElementById('btnCopiarIA').addEventListener('click', () => {
   navigator.clipboard.writeText(text.value);
   alert('Texto copiado!');
 });
+
+async function solicitarQuestoes() {
+  const btn = document.getElementById('btnGerarQuestoes');
+  const btnRefazer = document.getElementById('btnRefazerQuestoes');
+  btn.innerText = 'Elaborando questões...';
+  btn.disabled = true;
+  if (btnRefazer) btnRefazer.disabled = true;
+
+  try {
+    const res = await fetch('/api/ia/gerar-questoes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        materia: document.getElementById('questoesMateria').value,
+        tema: document.getElementById('questoesTema').value,
+        quantidade: document.getElementById('questoesQtd').value,
+        tipo: document.getElementById('questoesTipo').value
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Erro ao gerar questões');
+
+    document.getElementById('questoesTextoGerado').value = data.questoes;
+    document.getElementById('questoesResultadoBox').style.display = 'block';
+  } catch (err) {
+    alert(`Não foi possível gerar as questões: ${err.message}`);
+  } finally {
+    btn.innerText = '✨ Gerar Questões';
+    btn.disabled = false;
+    if (btnRefazer) btnRefazer.disabled = false;
+  }
+}
+
+document.getElementById('questoesForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  solicitarQuestoes();
+});
+
+document.getElementById('btnRefazerQuestoes').addEventListener('click', () => {
+  solicitarQuestoes();
+});
+
+document.getElementById('btnCopiarQuestoes').addEventListener('click', () => {
+  const text = document.getElementById('questoesTextoGerado');
+  text.select();
+  navigator.clipboard.writeText(text.value);
+  alert('Questões copiadas!');
+});

@@ -158,6 +158,7 @@ Daniel Oliveira</textarea>
         <div class="ia-tab-buttons" style="display: flex; gap: 10px; margin-bottom: 20px;">
           <button type="button" class="ia-tab-btn active" onclick="alternarModoIA('chat')">💬 Conversa Livre</button>
           <button type="button" class="ia-tab-btn" onclick="alternarModoIA('form')">📝 Gerador de Parecer (Formulário)</button>
+          <button type="button" class="ia-tab-btn" data-modo="questoes" onclick="alternarModoIA('questoes')">📋 Questões de Avaliação</button>
         </div>
 
         <div id="modo-ia-chat" class="modo-ia-content">
@@ -172,6 +173,62 @@ Daniel Oliveira</textarea>
               <input type="text" id="chatInput" class="chat-input" placeholder="Digite sua dúvida ou mensagem aqui..." required autocomplete="off">
               <button type="submit" id="btnSendChat" class="btn-send-chat">Enviar 🚀</button>
             </form>
+          </div>
+        </div>
+
+        <!-- MODO: GERADOR DE QUESTÕES DE AVALIAÇÃO -->
+        <div id="modo-ia-questoes" class="modo-ia-content" style="display: none;">
+          <form id="questoesForm" class="form-container">
+            <div class="form-group">
+              <label for="questoesMateria">Disciplina / Matéria:</label>
+              <select id="questoesMateria">
+                <option value="Língua Portuguesa">Língua Portuguesa</option>
+                <option value="Matemática">Matemática</option>
+                <option value="Ciências">Ciências</option>
+                <option value="História">História</option>
+                <option value="Geografia">Geografia</option>
+                <option value="Interdisciplinar">Interdisciplinar</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="questoesTema">Tema ou Conteúdo da Prova/Atividade:</label>
+              <input type="text" id="questoesTema" placeholder="Ex: Interpretação de texto, Frações, Sistema Solar..." required>
+            </div>
+
+            <div style="display: flex; gap: 15px;">
+              <div class="form-group" style="flex: 1;">
+                <label for="questoesQtd">Quantidade de Questões:</label>
+                <select id="questoesQtd">
+                  <option value="3">3 questões</option>
+                  <option value="5" selected>5 questões</option>
+                  <option value="8">8 questões</option>
+                  <option value="10">10 questões</option>
+                </select>
+              </div>
+
+              <div class="form-group" style="flex: 1;">
+                <label for="questoesTipo">Tipo de Questão:</label>
+                <select id="questoesTipo">
+                  <option value="Mista (objetivas e abertas)">Mista (Marcar X e Responder)</option>
+                  <option value="Múltipla escolha (A, B, C, D)">Só Múltipla Escolha (A, B, C, D)</option>
+                  <option value="Dissertativas (perguntas abertas)">Só Perguntas Abertas</option>
+                </select>
+              </div>
+            </div>
+
+            <button type="submit" id="btnGerarQuestoes">✨ Gerar Questões</button>
+          </form>
+
+          <div id="questoesResultadoBox" class="form-container" style="margin-top: 20px; display: none;">
+            <div class="form-group">
+              <label for="questoesTextoGerado">Questões Sugeridas (editável):</label>
+              <textarea id="questoesTextoGerado" rows="12"></textarea>
+            </div>
+            <div style="display: flex; gap: 10px;">
+              <button type="button" id="btnRefazerQuestoes" class="btn-secondary-ia">🔄 Gerar Outras Opções</button>
+              <button type="button" id="btnCopiarQuestoes" class="btn-secondary-ia">📋 Copiar Questões</button>
+            </div>
           </div>
         </div>
 
