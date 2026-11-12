@@ -114,21 +114,18 @@ document.getElementById('relatorioForm').addEventListener('submit', async (e) =>
 });
 
 function alternarModoIA(modo) {
-  const tabChat = document.getElementById('modo-ia-chat');
-  const tabForm = document.getElementById('modo-ia-form');
-  const btns = document.querySelectorAll('.ia-tab-btn');
+  const abas = {
+    chat: document.getElementById('modo-ia-chat'),
+    questoes: document.getElementById('modo-ia-questoes'),
+    form: document.getElementById('modo-ia-form')
+  };
 
-  btns.forEach(btn => btn.classList.remove('active'));
+  Object.values(abas).forEach(el => { if (el) el.style.display = 'none'; });
+  if (abas[modo]) abas[modo].style.display = 'block';
 
-  if (modo === 'chat') {
-    tabChat.style.display = 'block';
-    tabForm.style.display = 'none';
-    btns[0].classList.add('active');
-  } else {
-    tabChat.style.display = 'none';
-    tabForm.style.display = 'block';
-    btns[1].classList.add('active');
-  }
+  document.querySelectorAll('.ia-tab-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-modo') === modo);
+  });
 }
 
 const chatMessages = document.getElementById('chatMessages');
@@ -144,52 +141,82 @@ function adicionarMensagem(texto, origem) {
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-async function enviarMensagemParaIA(texto) {
-  adicionarMensagem(texto, 'user');
-
-  btnSendChat.disabled = true;
-  btnSendChat.innerText = 'Pensando...';
-
-  try {
-    const response = await fetch('/api/ia/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ mensagem: texto })
-    });
-
-    if (!response.ok) throw new Error('Erro na resposta da IA');
-
-    const data = await response.json();
-    adicionarMensagem(data.resposta, 'ai');
-  } catch (error) {
-    adicionarMensagem('Desculpe, não consegui responder agora. Verifique a chave da API no servidor.', 'ai');
-    console.error(error);
-  } finally {
-    btnSendChat.disabled = false;
-    btnSendChat.innerText = 'Enviar 🚀';
-  }
-}
-
-chatForm.addEventListener('submit', (e) => {
+chatForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const mensagem = chatInput.value.trim();
   if (!mensagem) return;
 
   chatInput.value = '';
-  enviarMensagemParaIA(mensagem);
+  adicionarMensagem(mensagem, 'user');
+  btnSendChat.disabled = true;
+
+  try {
+    const res = await fetch('/api/ia/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mensagem })
+    });
+    const data = await res.json();
+    adicionarMensagem(data.resposta || data.error || 'Sem resposta.', 'ai');
+  } catch (err) {
+    adicionarMensagem('Erro ao conectar com o servidor.', 'ai');
+  } finally {
+    btnSendChat.disabled = false;
+  }
 });
 
-document.querySelectorAll('.btn-shortcut').forEach(button => {
-  button.addEventListener('click', () => {
-    const promptPronto = button.getAttribute('data-prompt');
-    enviarMensagemParaIA(promptPronto);
-  });
+async function solicitarQuestoes() {
+  const btn = document.getElementById('btnGerarQuestoes');
+  const btnRefazer = document.getElementById('btnRefazerQuestoes');
+  btn.innerText = 'Elaborando questões...';
+  btn.disabled = true;
+  if (btnRefazer) btnRefazer.disabled = true;
+
+  try {
+    const res = await fetch('/api/ia/gerar-questoes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        materia: document.getElementById('questoesMateria').value,
+        tema: document.getElementById('questoesTema').value,
+        quantidade: document.getElementById('questoesQtd').value,
+        tipo: document.getElementById('questoesTipo').value
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Erro ao gerar questões');
+
+    document.getElementById('questoesTextoGerado').value = data.questoes;
+    document.getElementById('questoesResultadoBox').style.display = 'block';
+  } catch (err) {
+    alert(`Não foi possível gerar as questões: ${err.message}`);
+  } finally {
+    btn.innerText = '✨ Gerar Questões';
+    btn.disabled = false;
+    if (btnRefazer) btnRefazer.disabled = false;
+  }
+}
+
+document.getElementById('questoesForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  solicitarQuestoes();
+});
+
+document.getElementById('btnRefazerQuestoes').addEventListener('click', () => {
+  solicitarQuestoes();
+});
+
+document.getElementById('btnCopiarQuestoes').addEventListener('click', () => {
+  const text = document.getElementById('questoesTextoGerado');
+  text.select();
+  navigator.clipboard.writeText(text.value);
+  alert('Questões copiadas!');
 });
 
 document.getElementById('iaForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const btn = document.getElementById('btnGerarIA');
-  btn.innerText = 'Gerando parecer...';
+  btn.innerText = 'Gerando texto...';
   btn.disabled = true;
 
   try {
@@ -203,12 +230,14 @@ document.getElementById('iaForm').addEventListener('submit', async (e) => {
       })
     });
     const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Erro ao gerar texto');
+
     document.getElementById('iaTextoGerado').value = data.texto;
     document.getElementById('iaResultadoBox').style.display = 'block';
   } catch (err) {
-    alert('Erro ao gerar parecer com a IA.');
+    alert(`Não foi possível gerar o texto: ${err.message}`);
   } finally {
-    btn.innerText = '✨ Gerar Parecer com IA';
+    btn.innerText = '✨ Gerar Texto do Relatório';
     btn.disabled = false;
   }
 });
@@ -217,5 +246,5 @@ document.getElementById('btnCopiarIA').addEventListener('click', () => {
   const text = document.getElementById('iaTextoGerado');
   text.select();
   navigator.clipboard.writeText(text.value);
-  alert('Parecer copiado!');
+  alert('Texto copiado!');
 });

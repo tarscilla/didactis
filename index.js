@@ -3,6 +3,8 @@ require('dotenv').config();
 const express = require('express');
 const PDFDocument = require('pdfkit');
 const cors = require('cors');
+const fs = require('fs');
+const path = require('path');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const app = express();
@@ -32,25 +34,90 @@ app.post('/api/ia/chat', async (req, res) => {
     res.status(500).json({ error: 'Erro ao processar mensagem com a IA.' });
   }
 });
+async function chamarGemini(prompt, systemInstruction = '') {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error('Chave GEMINI_API_KEY não encontrada no .env');
+
+  const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+  const body = { contents: [{ parts: [{ text: prompt }] }] };
+  if (systemInstruction) body.systemInstruction = { parts: [{ text: systemInstruction }] };
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+    body: JSON.stringify(body)
+  });
+
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error?.message || `Erro HTTP ${response.status}`);
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || 'Sem resposta da IA.';
+}
+
+function enviarPdfBuffer(res, doc, filename) {
+  const chunks = [];
+  doc.on('data', (chunk) => chunks.push(chunk));
+  doc.on('end', () => {
+    const pdfBuffer = Buffer.concat(chunks);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename=${filename}`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+    res.end(pdfBuffer);
+  });
+  doc.end();
+}
+
+app.post('/api/ia/chat', async (req, res) => {
+  try {
+    const { mensagem } = req.body || {};
+    const instrucao = 'Você é a IA Assistente Pedagógica do Didactis, especializada no 5º Ano do Ensino Fundamental. Ajude a Profª Eliene da Silva Santos com planos de aula alinhados à BNCC, atividades e pareceres.';
+    const resposta = await chamarGemini(mensagem, instrucao);
+    res.json({ resposta });
+  } catch (error) {
+    res.json({ resposta: `⚠️ Erro na IA: ${error.message}` });
+  }
+});
+
+app.post('/api/ia/gerar-questoes', async (req, res) => {
+  try {
+    const { materia, tema, quantidade, tipo } = req.body || {};
+    const prompt = `Crie ${quantidade || 5} questões de avaliação para o 5º Ano do Ensino Fundamental.\nDisciplina: ${materia}\nTema: ${tema}\nFormato: ${tipo}\nNumere as questões e inclua um GABARITO PARA A PROFESSORA no final.`;
+    const questoes = await chamarGemini(prompt);
+    res.json({ questoes });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 app.post('/api/ia/gerar-texto', async (req, res) => {
   try {
     const { aluno, pontosFortes, observacoes } = req.body || {};
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-
-    const prompt = `Você é um assistente pedagógico especialista no 5º ano do Ensino Fundamental.
-Escreva um parecer descritivo empático, construtivo e alinhado à BNCC para o/a estudante: ${aluno || 'Estudante'}.
-
-Pontos fortes e avanços observados: ${pontosFortes}
-Aspectos a desenvolver / observações: ${observacoes}
-
-Gere um texto fluido em 2 a 3 parágrafos bem articulados, sem títulos genéricos.`;
-
-    const result = await model.generateContent(prompt);
-    res.json({ texto: result.response.text() });
+    const prompt = `Escreva um parecer descritivo empático e alinhado à BNCC para o(a) aluno(a) do 5º ano: ${aluno}.\nPontos fortes: ${pontosFortes}\nAspectos a desenvolver: ${observacoes}\nGere 2 a 3 parágrafos fluidos, sem títulos.`;
+    const texto = await chamarGemini(prompt);
+    res.json({ texto });
   } catch (error) {
-    console.error('Erro no Gerador de Parecer:', error);
-    res.status(500).json({ error: 'Erro ao gerar parecer.' });
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/ia/gerar-questoes', async (req, res) => {
+  try {
+    const { materia, tema, quantidade, tipo } = req.body || {};
+
+    const prompt = `Crie ${quantidade || 5} questões de avaliação para uma turma de 5º Ano do Ensino Fundamental.
+Disciplina: ${materia || 'Português'}
+Tema/Conteúdo: ${tema}
+Formato: ${tipo || 'Mista (objetivas e dissertativas)'}
+
+Regras:
+- Linguagem clara, adequada para alunos de 10 a 11 anos e alinhada à BNCC.
+- Numere cada questão (1, 2, 3...).
+- No final, coloque uma seção separada chamada "GABARITO PARA A PROFESSORA" com as respostas esperadas.`;
+
+    const questoes = await chamarGemini(prompt);
+    res.json({ questoes });
+  } catch (error) {
+    console.error('Erro ao gerar questões:', error.message);
+    res.status(500).json({ error: error.message });
   }
 });
 
@@ -127,6 +194,67 @@ app.post('/api/capas/gerar-pdf', (req, res) => {
   });
 
   doc.end();
+});
+
+app.post('/api/relatorios/gerar-pdf', (req, res) => {
+  const {
+    escola = "ESCOLA MUNICIPAL ARLETE GÓIS",
+    inep = "29059526",
+    cnpj = "05.059.070/0001-39",
+    endereco = "Rua Euclides da Cunha, 181 | Cafarnaum-BA",
+    professora = "Eliene da Silva Santos",
+    diretora = "Sirlei Sena de Oliveira",
+    email = "earletegois@gmail.com",
+    aluno = "Estudante",
+    turma = "5º Ano",
+    unidade = "1ª UNIDADE",
+    anoLetivo = "2026",
+    texto = ""
+  } = req.body || {};
+
+  const doc = new PDFDocument({ size: 'A4', margin: 50 });
+  const logoPath = path.join(__dirname, 'public', 'assets', 'images', 'logo-arlete-gois.png');
+
+  let startY = 45;
+
+  if (fs.existsSync(logoPath)) {
+    try {
+      doc.image(logoPath, 270, startY, { width: 55 });
+      startY += 62;
+    } catch (err) {
+      console.warn('Logo ignorada:', err.message);
+    }
+  }
+
+  doc.font('Helvetica-Bold').fontSize(13).fillColor('#1a365d')
+     .text(escola.toUpperCase(), 50, startY, { width: 495, align: 'center' });
+
+  doc.font('Helvetica').fontSize(9).fillColor('#4a5568')
+     .text(`INEP: ${inep}  |  CNPJ: ${cnpj}`, 50, doc.y + 3, { width: 495, align: 'center' })
+     .text(endereco, 50, doc.y + 2, { width: 495, align: 'center' });
+
+  startY = doc.y + 12;
+
+  doc.moveTo(50, startY).lineTo(545, startY).lineWidth(1).stroke('#cbd5e0');
+
+  doc.font('Helvetica-Bold').fontSize(11).fillColor('#2b6cb0')
+     .text(`RELATÓRIO INDIVIDUAL DO ALUNO | ${anoLetivo}`, 50, startY + 15, { align: 'center' });
+
+  doc.font('Helvetica-Bold').fontSize(10).fillColor('#1a365d')
+     .text(`ALUNO(A): ${aluno.toUpperCase()}  |  ${turma} — ${unidade.toUpperCase()}`, 50, doc.y + 5, { align: 'center' });
+
+  doc.font('Helvetica').fontSize(11).fillColor('#2d3748')
+     .text(texto, 50, doc.y + 20, { width: 495, align: 'justify', lineGap: 5 });
+
+  const footerY = 720;
+  doc.moveTo(50, footerY - 15).lineTo(545, footerY - 15).lineWidth(0.5).stroke('#e2e8f0');
+
+  doc.font('Helvetica').fontSize(10).fillColor('#2d3748')
+     .text(`Professora: ${professora}`, 50, footerY)
+     .text(`Diretora: ${diretora}`, 50, footerY + 16)
+     .text(`E-mail: ${email}`, 50, footerY + 32);
+
+  enviarPdfBuffer(res, doc, `relatorio_${aluno.toLowerCase().replace(/\s+/g, '_')}.pdf`);
 });
 
 const PORT = 3000;
