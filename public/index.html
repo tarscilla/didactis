@@ -3,81 +3,78 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Didactis — Plataforma Pedagógica</title>
+  <title>Didactis • Assistente Escolar</title>
   <link rel="stylesheet" href="styles.css">
-  <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
   <div class="app-container">
     <aside class="sidebar">
-      <div class="logo">
-        <h2><i data-lucide="graduation-cap"></i> Didactis</h2>
-        <span>Assistente Escolar</span>
+      <div class="brand">
+        <i data-lucide="graduation-cap"></i>
+        <div>
+          <h1>Didactis</h1>
+          <span>Assistente Escolar</span>
+        </div>
       </div>
 
       <nav class="menu">
-        <button class="menu-item active" data-target="view-inicio">
+        <button type="button" class="menu-item active" data-target="view-inicio">
           <i data-lucide="home"></i> Início
         </button>
-        <button class="menu-item" data-target="view-capas">
-          <i data-lucide="file-text"></i> Capas de Portfólio
+        <button type="button" class="menu-item" data-target="view-capas">
+          <i data-lucide="book-open"></i> Capas de Portfólio
         </button>
-        <button class="menu-item" data-target="relatorios-view">
-          <i data-lucide="file-pen-line"></i> Relatórios Descritivos
+        <button type="button" class="menu-item" data-target="view-relatorios">
+          <i data-lucide="file-text"></i> Relatórios Descritivos
         </button>
-        <button class="menu-item" data-target="view-ia">
+        <button type="button" class="menu-item" data-target="view-ia">
           <i data-lucide="sparkles"></i> Assistente de IA
         </button>
       </nav>
     </aside>
 
     <main class="main-content">
-
       <section id="view-inicio" class="view active">
         <header class="page-header">
-          <h1>Bem-vinda ao Didactis!</h1>
-          <p>Selecione uma ferramenta no menu ou escolha uma das opções abaixo para começar:</p>
+          <h2>Bem-vinda, Profª Eliene da Silva Santos</h2>
+          <p>Escola Municipal Arlete Góis • Turma: 5º Ano</p>
         </header>
 
         <div class="cards-grid">
-          <div class="card" onclick="navegarPara('view-capas')">
-            <span class="card-icon"><i data-lucide="file-text"></i></span>
-            <h3>Gerar Capas de Portfólio</h3>
-            <p>Crie capas personalizadas em lote com nome dos alunos, turma e molduras em PDF.</p>
-            <span class="card-link">Acessar ferramenta →</span>
+          <div class="card-atalho" onclick="navegarPara('view-capas')">
+            <i data-lucide="book-open"></i>
+            <h3>Capas de Portfólio</h3>
+            <p>Gere capas personalizadas em PDF para toda a turma de uma só vez.</p>
           </div>
-
-          <div class="card" onclick="navegarPara('relatorios-view')">
-            <span class="card-icon"><i data-lucide="file-pen-line"></i></span>
+          <div class="card-atalho" onclick="navegarPara('view-relatorios')">
+            <i data-lucide="file-text"></i>
             <h3>Relatórios Descritivos</h3>
-            <p>Gere pareceres pedagógicos individuais formatados em PDF para cada estudante.</p>
-            <span class="card-link">Acessar ferramenta →</span>
+            <p>Emita pareceres individuais com cabeçalho oficial da escola.</p>
           </div>
-
-          <div class="card" onclick="navegarPara('view-ia')">
-            <span class="card-icon"><i data-lucide="sparkles"></i></span>
-            <h3>Assistente Pedagógico IA</h3>
-            <p>Converse com a IA, elabore questões de avaliação e gere textos para relatórios.</p>
-            <span class="card-link">Acessar ferramenta →</span>
+          <div class="card-atalho" onclick="navegarPara('view-ia')">
+            <i data-lucide="sparkles"></i>
+            <h3>Assistente de IA</h3>
+            <p>Crie avaliações com/sem gabarito, pareceres e planos alinhados à BNCC.</p>
           </div>
         </div>
       </section>
 
       <section id="view-capas" class="view">
         <header class="page-header">
-          <h1>Gerador de Capas de Portfólio</h1>
-          <p>Preencha os dados abaixo para gerar as capas em lote em um único arquivo PDF.</p>
+          <h2>Capas de Portfólio</h2>
+          <p>Preencha os dados da turma e a lista de alunos (um nome por linha).</p>
         </header>
 
-        <form id="capaForm" class="form-container">
-          <div class="form-group">
-            <label for="escola">Nome da Escola:</label>
-            <input type="text" id="escola" value="ESCOLA MUNICIPAL ARLETE GÓIS" required>
-          </div>
-
-          <div class="form-group">
-            <label for="professora">Nome da Professora:</label>
-            <input type="text" id="professora" value="Eliene da Silva Santos" required>
+        <form id="capaForm" class="card-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="escola">Escola:</label>
+              <input type="text" id="escola" value="ESCOLA MUNICIPAL ARLETE GÓIS" required>
+            </div>
+            <div class="form-group">
+              <label for="professora">Professora:</label>
+              <input type="text" id="professora" value="Eliene da Silva Santos" required>
+            </div>
           </div>
 
           <div class="form-row">
@@ -87,7 +84,12 @@
             </div>
             <div class="form-group">
               <label for="unidade">Unidade:</label>
-              <input type="text" id="unidade" value="1ª UNIDADE" required>
+              <select id="unidade">
+                <option value="1ª UNIDADE">1ª UNIDADE</option>
+                <option value="2ª UNIDADE">2ª UNIDADE</option>
+                <option value="3ª UNIDADE">3ª UNIDADE</option>
+                <option value="4ª UNIDADE">4ª UNIDADE</option>
+              </select>
             </div>
             <div class="form-group">
               <label for="anoLetivo">Ano Letivo:</label>
@@ -96,70 +98,80 @@
           </div>
 
           <div class="form-group">
-            <label for="alunos">Lista de Alunos (um nome por linha):</label>
-            <textarea id="alunos" rows="5" placeholder="Digite o nome dos alunos aqui..." required>Ana Souza
-Bruno Lima
-Carla Dias
-Daniel Oliveira</textarea>
+            <label for="alunos">Lista de Estudantes (salva automaticamente):</label>
+            <textarea id="alunos" rows="8" placeholder="Digite um nome por linha..." required></textarea>
           </div>
 
-          <button type="submit" id="btnGerar"><i data-lucide="file-down"></i> Gerar Capas em PDF</button>
+          <button type="submit" id="btnGerar">Gerar Capas em PDF</button>
         </form>
       </section>
 
-      <section id="relatorios-view" class="view">
+      <section id="view-relatorios" class="view">
         <header class="page-header">
-          <h1>Relatório Descritivo Individual</h1>
-          <p>Gere o parecer pedagógico formatado em PDF para cada estudante.</p>
+          <h2>Relatórios Descritivos</h2>
+          <p>Gere o PDF oficial do parecer individual do estudante.</p>
         </header>
 
-        <form id="relatorioForm" class="form-container">
-          <div class="form-group">
-            <label for="relatorioEscola">Nome da Escola:</label>
-            <input type="text" id="relatorioEscola" value="ESCOLA MUNICIPAL ARLETE GÓIS" required>
-          </div>
-
-          <div class="form-group">
-            <label for="relatorioProfessora">Nome da Professora:</label>
-            <input type="text" id="relatorioProfessora" value="Eliene da Silva Santos" required>
+        <form id="relatorioForm" class="card-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="relatorioEscola">Escola:</label>
+              <input type="text" id="relatorioEscola" value="ESCOLA MUNICIPAL ARLETE GÓIS" required>
+            </div>
+            <div class="form-group">
+              <label for="relatorioProfessora">Professora:</label>
+              <input type="text" id="relatorioProfessora" value="Eliene da Silva Santos" required>
+            </div>
           </div>
 
           <div class="form-row">
             <div class="form-group">
-              <label for="relatorioAluno">Nome do Aluno:</label>
-              <input type="text" id="relatorioAluno" placeholder="Ex: Ana Souza" required>
+              <label for="relatorioAluno">Nome do(a) Aluno(a):</label>
+              <input type="text" id="relatorioAluno" placeholder="Selecione ou digite o nome..." required>
             </div>
-
             <div class="form-group">
               <label for="relatorioTurma">Turma:</label>
               <input type="text" id="relatorioTurma" value="5º Ano" required>
             </div>
-
             <div class="form-group">
-              <label for="relatorioUnidade">Unidade / Período:</label>
-              <input type="text" id="relatorioUnidade" value="1ª UNIDADE" required>
+              <label for="relatorioUnidade">Unidade:</label>
+              <select id="relatorioUnidade">
+                <option value="1ª UNIDADE">1ª UNIDADE</option>
+                <option value="2ª UNIDADE">2ª UNIDADE</option>
+                <option value="3ª UNIDADE">3ª UNIDADE</option>
+                <option value="4ª UNIDADE">4ª UNIDADE</option>
+              </select>
             </div>
           </div>
 
           <div class="form-group">
-            <label for="relatorioTexto">Parecer Pedagógico / Texto do Relatório:</label>
-            <textarea id="relatorioTexto" rows="10" placeholder="Digite ou cole aqui o parecer do aluno..." required></textarea>
+            <label for="relatorioTexto">Parecer Descritivo:</label>
+            <textarea id="relatorioTexto" rows="10" placeholder="Escreva ou cole o parecer gerado pela IA..." required></textarea>
           </div>
 
-          <button type="submit" id="btnGerarRelatorio"><i data-lucide="file-down"></i> Gerar Relatório em PDF</button>
+          <div class="botoes-pdf-row">
+            <button type="submit" id="btnGerarRelatorio">Gerar Relatório em PDF</button>
+            <button type="button" id="btnLimparRelatorio" class="btn-secundario">Limpar Texto</button>
+          </div>
         </form>
       </section>
 
       <section id="view-ia" class="view">
         <header class="page-header">
-          <h1>Assistente Pedagógico com IA</h1>
-          <p>Converse livremente, monte questões para provas e atividades ou gere textos para relatórios.</p>
+          <h2>Assistente Pedagógico com IA</h2>
+          <p>Converse, elabore avaliações em PDF ou gere pareceres descritivos.</p>
         </header>
 
-        <div class="ia-tab-buttons">
-          <button type="button" class="ia-tab-btn active" data-modo="chat" onclick="alternarModoIA('chat')"><i data-lucide="message-square"></i> Conversa Livre</button>
-          <button type="button" class="ia-tab-btn" data-modo="questoes" onclick="alternarModoIA('questoes')"><i data-lucide="list-checks"></i> Questões de Avaliação</button>
-          <button type="button" class="ia-tab-btn" data-modo="form" onclick="alternarModoIA('form')"><i data-lucide="file-text"></i> Texto de Relatório</button>
+        <div class="ia-tabs">
+          <button type="button" class="ia-tab-btn active" data-modo="chat" onclick="alternarModoIA('chat')">
+            <i data-lucide="message-square"></i> Conversa Livre
+          </button>
+          <button type="button" class="ia-tab-btn" data-modo="questoes" onclick="alternarModoIA('questoes')">
+            <i data-lucide="clipboard-list"></i> Gerador de Questões
+          </button>
+          <button type="button" class="ia-tab-btn" data-modo="form" onclick="alternarModoIA('form')">
+            <i data-lucide="pen-tool"></i> Gerador de Parecer
+          </button>
         </div>
 
         <div id="modo-ia-chat" class="modo-ia-content">
@@ -170,104 +182,121 @@ Daniel Oliveira</textarea>
                 <strong>Assistente Didactis • 5º Ano</strong>
                 <span class="chat-status">● Online</span>
               </div>
+              <button type="button" id="btnLimparChat" class="btn-limpar-chat" title="Limpar conversa">Limpar</button>
             </div>
 
             <div id="chatMessages" class="chat-messages">
               <div class="msg-ai">Olá, Profª Eliene! Posso ajudar com ideias de atividades, explicações da BNCC, dinâmicas ou revisão de textos. O que vamos preparar hoje?</div>
             </div>
 
-            <form id="chatForm" class="chat-form">
-              <input type="text" id="chatInput" class="chat-input" placeholder="Escreva sua mensagem..." required autocomplete="off">
-              <button type="submit" id="btnSendChat" class="btn-send-chat">Enviar <i data-lucide="send-horizontal"></i></button>
+            <form id="chatForm" class="chat-input-area">
+              <input type="text" id="chatInput" placeholder="Digite sua dúvida ou pedido pedagógico..." required>
+              <button type="submit" id="btnSendChat"><i data-lucide="send"></i></button>
             </form>
           </div>
         </div>
 
         <div id="modo-ia-questoes" class="modo-ia-content" style="display: none;">
-          <form id="questoesForm" class="form-container">
-            <div class="form-group">
-              <label for="questoesTema">Tema ou Conteúdo da Prova/Atividade:</label>
-              <input type="text" id="questoesTema" placeholder="Ex: Interpretação de texto, Frações, Sistema Solar..." required>
-            </div>
-
+          <form id="questoesForm" class="card-form">
             <div class="form-row">
               <div class="form-group">
-                <label for="questoesMateria">Disciplina / Matéria:</label>
+                <label for="questoesMateria">Disciplina:</label>
                 <select id="questoesMateria">
                   <option value="Língua Portuguesa">Língua Portuguesa</option>
                   <option value="Matemática">Matemática</option>
                   <option value="Ciências">Ciências</option>
                   <option value="História">História</option>
                   <option value="Geografia">Geografia</option>
-                  <option value="Interdisciplinar">Interdisciplinar</option>
                 </select>
               </div>
-
               <div class="form-group">
-                <label for="questoesQtd">Quantidade de Questões:</label>
-                <select id="questoesQtd">
-                  <option value="3">3 questões</option>
-                  <option value="5" selected>5 questões</option>
-                  <option value="8">8 questões</option>
-                  <option value="10">10 questões</option>
-                </select>
+                <label for="questoesQtd">Quantidade:</label>
+                <input type="number" id="questoesQtd" value="5" min="1" max="15" required>
               </div>
-
               <div class="form-group">
-                <label for="questoesTipo">Tipo de Questão:</label>
+                <label for="questoesTipo">Formato:</label>
                 <select id="questoesTipo">
-                  <option value="Mista (objetivas e abertas)">Mista (Marcar X e Responder)</option>
-                  <option value="Múltipla escolha (A, B, C, D)">Só Múltipla Escolha (A, B, C, D)</option>
-                  <option value="Dissertativas (perguntas abertas)">Só Perguntas Abertas</option>
+                  <option value="Mista (objetivas e dissertativas)">Mista (objetivas e dissertativas)</option>
+                  <option value="Objetivas (múltipla escolha)">Objetivas (múltipla escolha)</option>
+                  <option value="Dissertativas">Dissertativas</option>
                 </select>
               </div>
+            </div>
+
+            <div class="form-group">
+              <label for="questoesTema">Tema / Conteúdo da Avaliação:</label>
+              <input type="text" id="questoesTema" placeholder="Ex: Interpretação de texto, Frações, Sistema Solar..." required>
             </div>
 
             <button type="submit" id="btnGerarQuestoes"><i data-lucide="sparkles"></i> Gerar Questões</button>
           </form>
 
-          <div id="questoesResultadoBox" class="form-container" style="margin-top: 20px; display: none;">
-            <div class="form-group">
-              <label for="questoesTextoGerado">Questões Sugeridas (você pode editar ou gerar novas):</label>
-              <textarea id="questoesTextoGerado" rows="12"></textarea>
+          <div id="avaliacaoEditorBox" class="avaliacao-editor-box" style="display: none; margin-top: 20px;">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="avaliacaoTitulo">Título da Avaliação:</label>
+                <input type="text" id="avaliacaoTitulo" value="AVALIAÇÃO DE APRENDIZAGEM">
+              </div>
+              <div class="form-group">
+                <label for="avaliacaoUnidade">Unidade:</label>
+                <select id="avaliacaoUnidade">
+                  <option value="1ª UNIDADE">1ª UNIDADE</option>
+                  <option value="2ª UNIDADE">2ª UNIDADE</option>
+                  <option value="3ª UNIDADE">3ª UNIDADE</option>
+                  <option value="4ª UNIDADE">4ª UNIDADE</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="avaliacaoData">Data (opcional):</label>
+                <input type="text" id="avaliacaoData" placeholder="Ex: 15/11/2026">
+              </div>
             </div>
-            <div style="display: flex; gap: 10px;">
-              <button type="button" id="btnRefazerQuestoes" class="btn-secondary-ia"><i data-lucide="refresh-cw"></i> Gerar Outras Opções</button>
-              <button type="button" id="btnCopiarQuestoes" class="btn-secondary-ia"><i data-lucide="copy"></i> Copiar Questões</button>
+
+            <div class="form-group">
+              <label for="questoesEditor">Revise ou edite as questões e o gabarito antes de baixar:</label>
+              <textarea id="questoesEditor" rows="15"></textarea>
+            </div>
+
+            <div class="botoes-pdf-row">
+              <button type="button" id="btnBaixarComGabarito" class="btn-secundario">
+                <i data-lucide="file-check"></i> Baixar Com Gabarito (Professora)
+              </button>
+              <button type="button" id="btnBaixarSemGabarito">
+                <i data-lucide="file-down"></i> Baixar Sem Gabarito (Alunos)
+              </button>
             </div>
           </div>
         </div>
 
         <div id="modo-ia-form" class="modo-ia-content" style="display: none;">
-          <form id="iaForm" class="form-container">
+          <form id="iaForm" class="card-form">
             <div class="form-group">
-              <label for="iaAluno">Nome do Aluno(a):</label>
-              <input type="text" id="iaAluno" placeholder="Ex: Nicolle Vitória" required>
+              <label for="iaAluno">Nome do(a) Aluno(a):</label>
+              <input type="text" id="iaAluno" placeholder="Ex: Ana Clara" required>
             </div>
-
             <div class="form-group">
-              <label for="iaPontosFortes">Pontos Fortes e Avanços Observados:</label>
-              <textarea id="iaPontosFortes" rows="3" placeholder="Ex: Boa convivência, interesse nas atividades, leitura em evolução..." required></textarea>
+              <label for="iaPontosFortes">Pontos fortes e avanços observados:</label>
+              <textarea id="iaPontosFortes" rows="3" placeholder="Ex: Boa leitura, participa das aulas, ajuda os colegas..." required></textarea>
             </div>
-
             <div class="form-group">
-              <label for="iaObservacoes">Aspectos a Desenvolver / Observações:</label>
-              <textarea id="iaObservacoes" rows="3" placeholder="Ex: Precisa aprimorar ortografia, pontuação e atenção nas aulas." required></textarea>
+              <label for="iaObservacoes">Aspectos a desenvolver / observações:</label>
+              <textarea id="iaObservacoes" rows="3" placeholder="Ex: Precisa praticar interpretação e organização das atividades..."></textarea>
             </div>
-
             <button type="submit" id="btnGerarIA"><i data-lucide="sparkles"></i> Gerar Texto do Relatório</button>
           </form>
 
-          <div id="iaResultadoBox" class="form-container" style="margin-top: 20px; display: none;">
+          <div id="iaResultadoBox" class="card-form" style="display: none; margin-top: 20px;">
             <div class="form-group">
-              <label for="iaTextoGerado">Texto Gerado (copie e cole na aba Relatórios Descritivos):</label>
+              <label for="iaTextoGerado">Texto gerado (revise se desejar):</label>
               <textarea id="iaTextoGerado" rows="8"></textarea>
             </div>
-            <button type="button" id="btnCopiarIA" class="btn-secondary-ia"><i data-lucide="copy"></i> Copiar Texto</button>
+            <div class="botoes-pdf-row">
+              <button type="button" id="btnUsarNoRelatorio">Usar na Aba Relatórios</button>
+              <button type="button" id="btnCopiarIA" class="btn-secundario">Copiar Texto</button>
+            </div>
           </div>
         </div>
       </section>
-
     </main>
   </div>
 
