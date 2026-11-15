@@ -38,6 +38,27 @@ function navegarPara(viewId) {
   if (targetMenuItem) targetMenuItem.classList.add('active');
 }
 
+function prepararAbaPdf() {
+  return window.open('', '_blank');
+}
+
+function exibirPdfNaAba(aba, blob, nomeArquivo) {
+  const pdfBlob = new Blob([blob], { type: 'application/pdf' });
+  const pdfUrl = URL.createObjectURL(pdfBlob);
+
+  if (aba && !aba.closed) {
+    aba.location.href = pdfUrl;
+    return;
+  }
+
+  const a = document.createElement('a');
+  a.href = pdfUrl;
+  a.download = nomeArquivo;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
 menuItems.forEach(button => {
   button.addEventListener('click', () => {
     const targetView = button.getAttribute('data-target');
@@ -67,6 +88,8 @@ document.getElementById('capaForm').addEventListener('submit', async (e) => {
     alunos: alunosArray
   };
 
+  const abaPdf = prepararAbaPdf();
+
   try {
     const response = await fetch('/api/capas/gerar-pdf', {
       method: 'POST',
@@ -77,20 +100,13 @@ document.getElementById('capaForm').addEventListener('submit', async (e) => {
     if (!response.ok) throw new Error('Erro ao gerar o PDF');
 
     const blob = await response.blob();
-    const pdfUrl = URL.createObjectURL(blob);
-    
-    const a = document.createElement('a');
-    a.href = pdfUrl;
-    a.download = 'capas_portfolio.pdf';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-
+    exibirPdfNaAba(abaPdf, blob, 'capas_portfolio.pdf');
   } catch (error) {
+    if (abaPdf && !abaPdf.closed) abaPdf.close();
     alert('Não foi possível conectar com o servidor backend.');
     console.error(error);
   } finally {
-    btn.innerText = '🚀 Gerar Capas em PDF';
+    btn.innerText = 'Gerar Capas em PDF';
     btn.disabled = false;
   }
 });
@@ -111,6 +127,8 @@ document.getElementById('relatorioForm').addEventListener('submit', async (e) =>
     texto: document.getElementById('relatorioTexto').value
   };
 
+  const abaPdf = prepararAbaPdf();
+
   try {
     const response = await fetch('/api/relatorios/gerar-pdf', {
       method: 'POST',
@@ -121,20 +139,13 @@ document.getElementById('relatorioForm').addEventListener('submit', async (e) =>
     if (!response.ok) throw new Error('Erro na resposta do servidor');
 
     const blob = await response.blob();
-    const pdfUrl = URL.createObjectURL(blob);
-    
-    const a = document.createElement('a');
-    a.href = pdfUrl;
-    a.download = `relatorio_${dadosFormulario.aluno.toLowerCase().replace(/\s+/g, '_')}.pdf`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-
+    exibirPdfNaAba(abaPdf, blob, `relatorio_${dadosFormulario.aluno.toLowerCase().replace(/\s+/g, '_')}.pdf`);
   } catch (error) {
-    alert('Rota do backend ainda não configurada. Aguardando modelo de layout!');
+    if (abaPdf && !abaPdf.closed) abaPdf.close();
+    alert('Não foi possível gerar o relatório em PDF.');
     console.error(error);
   } finally {
-    btn.innerText = '📄 Gerar Relatório em PDF';
+    btn.innerText = 'Gerar Relatório em PDF';
     btn.disabled = false;
   }
 });
@@ -167,9 +178,6 @@ function adicionarMensagem(texto, origem) {
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-// =========================================================
-// PERSISTÊNCIA LOCAL (localStorage)
-// =========================================================
 const STORAGE_KEYS = {
   CHAT: 'didactis_chat_historico',
   UNIDADE: 'didactis_unidade',
@@ -383,6 +391,8 @@ async function baixarAvaliacaoPdf(incluirGabarito) {
   btnAlvo.disabled = true;
   btnAlvo.textContent = 'Gerando PDF...';
 
+  const abaPdf = prepararAbaPdf();
+
   try {
     const response = await fetch('/api/avaliacoes/gerar-pdf', {
       method: 'POST',
@@ -393,16 +403,10 @@ async function baixarAvaliacaoPdf(incluirGabarito) {
     if (!response.ok) throw new Error('Falha ao montar o PDF da avaliação.');
 
     const blob = await response.blob();
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
     const sufixo = incluirGabarito ? 'com_gabarito' : 'alunos';
-    a.download = `prova_${(materia || 'avaliacao').toLowerCase().replace(/\s+/g, '_')}_${sufixo}.pdf`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    window.URL.revokeObjectURL(url);
+    exibirPdfNaAba(abaPdf, blob, `prova_${(materia || 'avaliacao').toLowerCase().replace(/\s+/g, '_')}_${sufixo}.pdf`);
   } catch (err) {
+    if (abaPdf && !abaPdf.closed) abaPdf.close();
     alert(`Erro ao gerar PDF: ${err.message}`);
   } finally {
     btnAlvo.innerHTML = textoOriginal;

@@ -103,15 +103,17 @@ app.post('/api/ia/gerar-questoes', async (req, res) => {
   try {
     const { materia, tema, quantidade, tipo } = req.body || {};
 
-    const prompt = `Crie ${quantidade || 5} questões de avaliação para uma turma de 5º Ano do Ensino Fundamental.
-Disciplina: ${materia || 'Português'}
-Tema/Conteúdo: ${tema}
-Formato: ${tipo || 'Mista (objetivas e dissertativas)'}
+    const prompt = `Você é uma professora do 5º ano do Ensino Fundamental da Escola Municipal Arlete Góis.
+    Elabore ${quantidade || 5} questões de ${materia || 'Ciências'} sobre "${tema}" no formato "${tipo}".
 
-Regras:
-- Linguagem clara, adequada para alunos de 10 a 11 anos e alinhada à BNCC.
-- Numere cada questão (1, 2, 3...).
-- No final, coloque uma seção separada chamada "GABARITO PARA A PROFESSORA" com as respostas esperadas.`;
+    Siga exatamente o estilo pedagógico das avaliações da escola:
+    - Quando fizer sentido, abra com um texto curto e claro de apoio ("Leia o texto e responda:").
+    - Varie entre múltipla escolha (alternativas a, b, c, d), Verdadeiro ou Falso ("Marque V ou F:" com "(   )" antes de cada afirmativa), Relacione as colunas (com "(   )") e questões abertas/cálculos.
+    - Em questões de cálculo ou resposta escrita, coloque na linha seguinte exatamente a marcação [CAIXA_RESPOSTA] para que o PDF desenhe o quadro de resposta do aluno.
+    - Não coloque as respostas junto das perguntas.
+    - Ao final de tudo, escreva exatamente uma linha com --- GABARITO --- e liste as respostas numeradas.
+
+    Responda apenas com o conteúdo da avaliação e o gabarito, sem introduções ou saudações.`;
 
     const questoes = await chamarGemini(prompt);
     res.json({ questoes });
@@ -292,103 +294,115 @@ app.post('/api/relatorios/gerar-pdf', (req, res) => {
 });
 
 app.post('/api/avaliacoes/gerar-pdf', (req, res) => {
-  const {
-    escola = 'ESCOLA MUNICIPAL ARLETE GÓIS',
-    inep = '29059526',
-    cnpj = '05.059.070/0001-39',
-    endereco = 'Rua Euclides da Cunha, 181 | Cafarnaum-BA',
-    professora = 'Eliene da Silva Santos',
-    turma = '5º Ano',
-    unidade = '1ª UNIDADE',
-    materia = '',
-    titulo = 'AVALIAÇÃO DE APRENDIZAGEM',
-    data = '',
-    texto = '',
-    incluirGabarito = false
-  } = req.body || {};
+  try {
+    const {
+      materia = '',
+      titulo = 'AVALIAÇÃO DE APRENDIZAGEM',
+      unidade = '1ª UNIDADE',
+      data = '',
+      texto = '',
+      incluirGabarito = false
+    } = req.body || {};
 
-  const doc = new PDFDocument({ size: 'A4', margin: 50 });
-  const logoPath = path.join(__dirname, 'public', 'assets', 'images', 'logo-arlete-gois.png');
+    const partes = texto.split(/---\s*GABARITO\s*---/i);
+    const corpoQuestoes = (partes[0] || '').trim();
+    const corpoGabarito = (partes[1] || '').trim();
 
-  let startY = 40;
+    const doc = new PDFDocument({ size: 'A4', margin: 45 });
+    const chunks = [];
 
-  if (fs.existsSync(logoPath)) {
-    try {
-      doc.image(logoPath, 270, startY, { width: 52 });
-      startY += 58;
-    } catch (err) {
-      console.warn('Logo ignorada:', err.message);
+    doc.on('data', (chunk) => chunks.push(chunk));
+    doc.on('end', () => {
+      const pdfBuffer = Buffer.concat(chunks);
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Length', pdfBuffer.length);
+      res.send(pdfBuffer);
+    });
+    doc.on('error', (err) => {
+      if (!res.headersSent) {
+        res.status(500).json({ error: err.message });
+      }
+    });
+
+    const logoPath = path.join(__dirname, 'public', 'assets', 'images', 'logo-arlete-gois.png');
+    const topY = 25;
+
+    if (require('fs').existsSync(logoPath)) {
+      doc.image(logoPath, 152, topY, { fit: [46, 48] });
+    }
+
+    doc.font('Helvetica-Bold').fontSize(13).fillColor('#0f172a')
+      .text('ESCOLA MUNICIPAL ARLETE GÓIS', 208, topY + 8, { align: 'center', width: 235 });
+    doc.font('Helvetica').fontSize(9).fillColor('#334155')
+      .text('INEP. 29059526 | CNPJ. 05.059.070/0001-39', 208, topY + 25, { align: 'center', width: 235 });
+
+    const boxY = topY + 58;
+    doc.roundedRect(45, boxY, 505, 52, 4).lineWidth(0.8).strokeColor('#64748b').stroke();
+
+    doc.font('Helvetica-Bold').fontSize(10).fillColor('#0f172a')
+      .text('Aluno(a): ____________________________________________________________________', 55, boxY + 10);
+
+    const dataFormatada = data.trim() ? data.trim() : '____/____/2026';
+    doc.text(`Profª: Eliene da Silva Santos          Turma: 5º Ano          Data: ${dataFormatada}`, 55, boxY + 30);
+
+    const tituloLimpo = titulo.toUpperCase().includes(unidade.toUpperCase())
+      ? titulo.toUpperCase()
+      : `${titulo.toUpperCase()} – ${unidade.toUpperCase()}`;
+
+    doc.y = boxY + 66;
+    doc.font('Helvetica-Bold').fontSize(12).fillColor('#0f172a')
+      .text(tituloLimpo, 45, doc.y, { align: 'center', width: 505 });
+
+    if (incluirGabarito) {
+      doc.font('Helvetica-Bold').fontSize(9).fillColor('#0284c7')
+        .text('(VERSÃO DA PROFESSORA – COM GABARITO)', { align: 'center', width: 505 });
+    }
+
+    doc.moveDown(1);
+
+    const linhas = corpoQuestoes.split('\n');
+    for (const linhaRaw of linhas) {
+      const linha = linhaRaw.trim();
+
+      if (!linha) {
+        doc.moveDown(0.4);
+        continue;
+      }
+
+      if (linha === '[CAIXA_RESPOSTA]') {
+        if (doc.y > 700) doc.addPage();
+        doc.rect(45, doc.y + 2, 505, 65).lineWidth(0.7).strokeColor('#94a3b8').stroke();
+        doc.y += 74;
+        continue;
+      }
+
+      const ehEnunciado = /^(\d+[\.\-\)]|Questões:|Leia o texto|Consulte o texto|Marque V|Relacione)/i.test(linha);
+      doc.font(ehEnunciado ? 'Helvetica-Bold' : 'Helvetica')
+        .fontSize(10.5)
+        .fillColor('#1e293b')
+        .text(linha, 45, doc.y, { width: 505, align: 'left', lineGap: 2 });
+    }
+
+    if (incluirGabarito && corpoGabarito) {
+      doc.moveDown(1.2);
+      if (doc.y > 680) doc.addPage();
+
+      doc.moveTo(45, doc.y).lineTo(550, doc.y).lineWidth(1).strokeColor('#0284c7').stroke();
+      doc.moveDown(0.6);
+      doc.font('Helvetica-Bold').fontSize(11).fillColor('#0284c7')
+        .text('GABARITO (PROFESSORA)', 45, doc.y, { width: 505 });
+      doc.moveDown(0.4);
+      doc.font('Helvetica').fontSize(10).fillColor('#0f172a')
+        .text(corpoGabarito, 45, doc.y, { width: 505, lineGap: 3 });
+    }
+
+    doc.end();
+  } catch (error) {
+    console.error('Erro ao montar PDF da avaliação:', error.message);
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Erro ao gerar PDF da avaliação.' });
     }
   }
-
-  doc.font('Helvetica-Bold').fontSize(13).fillColor('#1a365d')
-     .text(escola.toUpperCase(), 50, startY, { width: 495, align: 'center' });
-
-  doc.font('Helvetica').fontSize(9).fillColor('#4a5568')
-     .text(`INEP: ${inep}  |  CNPJ: ${cnpj}`, 50, doc.y + 2, { width: 495, align: 'center' })
-     .text(endereco, 50, doc.y + 2, { width: 495, align: 'center' });
-
-  startY = doc.y + 10;
-
-  doc.roundedRect(50, startY, 495, 66, 6).lineWidth(0.8).stroke('#cbd5e0');
-
-  doc.font('Helvetica-Bold').fontSize(9.5).fillColor('#1a365d')
-     .text(`Professora: `, 62, startY + 10, { continued: true })
-     .font('Helvetica').fillColor('#2d3748')
-     .text(`${professora}    |    `, { continued: true })
-     .font('Helvetica-Bold').fillColor('#1a365d')
-     .text(`Turma: `, { continued: true })
-     .font('Helvetica').fillColor('#2d3748')
-     .text(`${turma}    |    ${unidade.toUpperCase()}`);
-
-  doc.font('Helvetica-Bold').fontSize(9.5).fillColor('#1a365d')
-     .text(`Aluno(a): `, 62, startY + 28, { continued: true })
-     .font('Helvetica').fillColor('#2d3748')
-     .text(`_________________________________________________    `, { continued: true })
-     .font('Helvetica-Bold').fillColor('#1a365d')
-     .text(`Data: `, { continued: true })
-     .font('Helvetica').fillColor('#2d3748')
-     .text(data || '___/___/2026');
-
-  doc.font('Helvetica-Bold').fontSize(9.5).fillColor('#1a365d')
-     .text(`Disciplina: `, 62, startY + 46, { continued: true })
-     .font('Helvetica').fillColor('#2d3748')
-     .text(`${materia || '______________________'}      `, { continued: true })
-     .font('Helvetica-Bold').fillColor('#1a365d')
-     .text(`Valor: `, { continued: true })
-     .font('Helvetica').fillColor('#2d3748')
-     .text(`________      `, { continued: true })
-     .font('Helvetica-Bold').fillColor('#1a365d')
-     .text(`Nota: `, { continued: true })
-     .font('Helvetica').fillColor('#2d3748')
-     .text(`________`);
-
-  doc.font('Helvetica-Bold').fontSize(12).fillColor('#2b6cb0')
-     .text(titulo.toUpperCase(), 50, startY + 80, { width: 495, align: 'center' });
-
-  const regexGabarito = /(?:^|\n)\s*(?:#{1,3}\s*)?(?:\*{1,2})?GABARITO(?:\s+PARA\s+A\s+PROFESSORA)?(?:\*{1,2})?\s*:?\s*(?:\n|$)/i;
-  const partes = texto.split(regexGabarito);
-  const textoQuestoes = partes[0].trim();
-  const textoGabarito = partes.length > 1 ? partes.slice(1).join('\n').trim() : '';
-
-  doc.font('Helvetica').fontSize(11).fillColor('#1e293b')
-     .text(textoQuestoes, 50, doc.y + 14, { width: 495, align: 'left', lineGap: 4 });
-
-  if (incluirGabarito && textoGabarito) {
-    if (doc.y > 620) doc.addPage();
-    const divY = doc.y + 18;
-    doc.moveTo(50, divY).lineTo(545, divY).lineWidth(1).stroke('#cbd5e0');
-
-    doc.font('Helvetica-Bold').fontSize(11).fillColor('#1a365d')
-       .text('GABARITO PARA A PROFESSORA', 50, divY + 12, { width: 495, align: 'left' });
-
-    doc.font('Helvetica').fontSize(10.5).fillColor('#334155')
-       .text(textoGabarito, 50, doc.y + 8, { width: 495, align: 'left', lineGap: 4 });
-  }
-
-  const sufixo = incluirGabarito ? 'com_gabarito' : 'alunos';
-  const nomeBase = (materia || 'avaliacao').toLowerCase().replace(/\s+/g, '_');
-  enviarPdfBuffer(res, doc, `prova_${nomeBase}_${sufixo}.pdf`);
 });
 
 app.post('/api/avaliacoes/gerar-pdf', (req, res) => {
