@@ -382,3 +382,97 @@ button:disabled {
 .chat-input-area input {
   flex: 1;
 }
+
+@media (max-width: 768px) {
+  body,
+  .app-container,
+  .layout,
+  .container {
+    flex-direction: column !important;
+  }
+
+  aside,
+  .sidebar {
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    min-height: auto !important;
+    position: relative !important;
+    left: 0 !important;
+    top: 0 !important;
+    padding: 14px 16px !important;
+    box-sizing: border-box !important;
+  }
+
+  aside ul,
+  .sidebar ul,
+  .sidebar-nav,
+  .nav-menu {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    margin-top: 12px !important;
+    padding: 0 !important;
+  }
+
+  aside li,
+  .sidebar li {
+    flex: 1 1 calc(50% - 8px) !important;
+    margin: 0 !important;
+    list-style: none !important;
+  }
+
+  aside a,
+  aside button,
+  .sidebar a,
+  .sidebar button,
+  .nav-item {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 10px 10px !important;
+    font-size: 0.85rem !important;
+    justify-content: center !important;
+    text-align: center !important;
+    box-sizing: border-box !important;
+  }
+
+  main,
+  .main-content,
+  .content {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    padding: 18px 16px !important;
+    box-sizing: border-box !important;
+  }
+
+  main h1,
+  .main-content h1 {
+    font-size: 1.5rem !important;
+    line-height: 1.25 !important;
+  }
+
+  .tabs,
+  .tab-buttons,
+  [role="tablist"] {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+
+  .tabs button,
+  .tab-buttons button {
+    flex: 1 1 100% !important;
+    width: 100% !important;
+  }
+
+  .grid,
+  .cards-grid,
+  .form-row,
+  .two-columns {
+    grid-template-columns: 1fr !important;
+    flex-direction: column !important;
+  }
+}
