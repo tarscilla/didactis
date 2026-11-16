@@ -210,62 +210,24 @@ app.post('/api/relatorios/gerar-pdf', (req, res) => {
     texto = ""
   } = req.body || {};
 
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', `inline; filename=relatorio_${aluno.toLowerCase().replace(/\s+/g, '_')}.pdf`);
-
-  const doc = new PDFDocument({ size: 'A4', margin: 50 });
-  doc.pipe(res);
+  const doc = new PDFDocument({
+    size: 'A4',
+    bufferPages: true,
+    margins: { top: 125, bottom: 110, left: 50, right: 50 }
+  });
 
   const logoPath = path.join(__dirname, 'public', 'assets', 'images', 'logo-arlete-gois.png');
   const hasLogo = fs.existsSync(logoPath);
 
-  let startY = 50;
-
-  if (hasLogo) {
-    doc.image(logoPath, 50, startY, { width: 55 });
-
-    doc.font('Helvetica-Bold')
-       .fontSize(13)
-       .fillColor('#1a365d')
-       .text(escola.toUpperCase(), 115, startY + 5);
-
-    doc.font('Helvetica')
-       .fontSize(9)
-       .fillColor('#4a5568')
-       .text(`INEP: ${inep}  |  CNPJ: ${cnpj}`, 115, startY + 23)
-       .text(endereco, 115, startY + 36);
-
-    startY += 65;
-  } else {
-    doc.font('Helvetica-Bold')
-       .fontSize(14)
-       .fillColor('#1a365d')
-       .text(escola.toUpperCase(), { align: 'center' })
-       .moveDown(0.2);
-
-    doc.font('Helvetica')
-       .fontSize(9)
-       .fillColor('#4a5568')
-       .text(`INEP: ${inep}  |  CNPJ: ${cnpj}`, { align: 'center' })
-       .text(endereco, { align: 'center' });
-
-    startY = doc.y + 10;
-  }
-
-  doc.moveTo(50, startY)
-     .lineTo(545, startY)
-     .lineWidth(1)
-     .stroke('#cbd5e0');
-
   doc.font('Helvetica-Bold')
      .fontSize(11)
      .fillColor('#2b6cb0')
-     .text(`RELATÓRIO INDIVIDUAL DO ALUNO | ${anoLetivo}`, 50, startY + 15, { align: 'center' });
+     .text(`RELATÓRIO INDIVIDUAL DO ALUNO | ${anoLetivo}`, 50, 125, { align: 'center', width: 495 });
 
   doc.font('Helvetica-Bold')
      .fontSize(10)
      .fillColor('#1a365d')
-     .text(`ALUNO(A): ${aluno.toUpperCase()}  |  ${turma} — ${unidade.toUpperCase()}`, 50, doc.y + 5, { align: 'center' });
+     .text(`ALUNO(A): ${aluno.toUpperCase()}  |  ${turma} — ${unidade.toUpperCase()}`, 50, doc.y + 4, { align: 'center', width: 495 });
 
   doc.font('Helvetica')
      .fontSize(11)
@@ -276,21 +238,77 @@ app.post('/api/relatorios/gerar-pdf', (req, res) => {
        lineGap: 5
      });
 
-  const footerY = 720;
+  if (doc.y > 700) {
+    doc.addPage();
+  }
 
-  doc.moveTo(50, footerY - 15)
-     .lineTo(545, footerY - 15)
-     .lineWidth(0.5)
-     .stroke('#e2e8f0');
+  const range = doc.bufferedPageRange();
+  for (let i = 0; i < range.count; i++) {
+    doc.switchToPage(i);
+    const startY = 38;
+
+    if (hasLogo) {
+      doc.image(logoPath, 130, startY, { fit: [52, 54] });
+
+      doc.font('Helvetica-Bold')
+         .fontSize(13)
+         .fillColor('#1a365d')
+         .text(escola.toUpperCase(), 192, startY + 7, { align: 'center', width: 270, lineBreak: false });
+
+      doc.font('Helvetica')
+         .fontSize(9)
+         .fillColor('#4a5568')
+         .text(`INEP: ${inep}  |  CNPJ: ${cnpj}`, 192, startY + 25, { align: 'center', width: 270, lineBreak: false })
+         .text(endereco, 192, startY + 38, { align: 'center', width: 270, lineBreak: false });
+    } else {
+      doc.font('Helvetica-Bold')
+         .fontSize(14)
+         .fillColor('#1a365d')
+         .text(escola.toUpperCase(), 50, startY + 5, { align: 'center', width: 495, lineBreak: false });
+
+      doc.font('Helvetica')
+         .fontSize(9)
+         .fillColor('#4a5568')
+         .text(`INEP: ${inep}  |  CNPJ: ${cnpj}`, 50, startY + 24, { align: 'center', width: 495, lineBreak: false })
+         .text(endereco, 50, startY + 37, { align: 'center', width: 495, lineBreak: false });
+    }
+
+    doc.moveTo(50, startY + 66)
+       .lineTo(545, startY + 66)
+       .lineWidth(1)
+       .stroke('#cbd5e0');
+  }
+
+  doc.switchToPage(range.count - 1);
+  doc.page.margins.bottom = 0;
+  const footerY = 762;
+
+  doc.moveTo(50, footerY - 34)
+     .lineTo(545, footerY - 34)
+     .lineWidth(0.6)
+     .stroke('#cbd5e0');
+
+  doc.moveTo(65, footerY - 5).lineTo(255, footerY - 5).lineWidth(0.7).stroke('#64748b');
+  doc.moveTo(340, footerY - 5).lineTo(530, footerY - 5).lineWidth(0.7).stroke('#64748b');
+
+  doc.font('Helvetica-Bold')
+     .fontSize(9.5)
+     .fillColor('#1e293b')
+     .text(professora, 50, footerY, { width: 220, align: 'center', lineBreak: false })
+     .text(diretora, 325, footerY, { width: 220, align: 'center', lineBreak: false });
 
   doc.font('Helvetica')
-     .fontSize(10)
-     .fillColor('#2d3748')
-     .text(`Professora: ${professora}`, 50, footerY)
-     .text(`Diretora: ${diretora}`, 50, footerY + 16)
-     .text(`E-mail: ${email}`, 50, footerY + 32);
+     .fontSize(8.5)
+     .fillColor('#64748b')
+     .text('Professora Regente', 50, footerY + 12, { width: 220, align: 'center', lineBreak: false })
+     .text('Diretora Escolar', 325, footerY + 12, { width: 220, align: 'center', lineBreak: false });
 
-  doc.end();
+  doc.font('Helvetica')
+     .fontSize(9)
+     .fillColor('#475569')
+     .text(`E-mail institucional: ${email}`, 50, footerY + 34, { width: 495, align: 'center', lineBreak: false });
+
+  enviarPdfBuffer(res, doc, `relatorio_${aluno.toLowerCase().replace(/\s+/g, '_')}.pdf`);
 });
 
 app.post('/api/avaliacoes/gerar-pdf', (req, res) => {
@@ -403,106 +421,6 @@ app.post('/api/avaliacoes/gerar-pdf', (req, res) => {
       res.status(500).json({ error: 'Erro ao gerar PDF da avaliação.' });
     }
   }
-});
-
-app.post('/api/avaliacoes/gerar-pdf', (req, res) => {
-  const {
-    escola = 'ESCOLA MUNICIPAL ARLETE GÓIS',
-    inep = '29059526',
-    cnpj = '05.059.070/0001-39',
-    endereco = 'Rua Euclides da Cunha, 181 | Cafarnaum-BA',
-    professora = 'Eliene da Silva Santos',
-    turma = '5º Ano',
-    unidade = '1ª UNIDADE',
-    materia = '',
-    titulo = 'AVALIAÇÃO DE APRENDIZAGEM',
-    data = '',
-    texto = '',
-    incluirGabarito = false
-  } = req.body || {};
-
-  const doc = new PDFDocument({ size: 'A4', margin: 50 });
-  const logoPath = path.join(__dirname, 'public', 'assets', 'images', 'logo-arlete-gois.png');
-
-  let startY = 40;
-
-  if (fs.existsSync(logoPath)) {
-    try {
-      doc.image(logoPath, 270, startY, { width: 52 });
-      startY += 58;
-    } catch (err) {
-      console.warn('Logo ignorada:', err.message);
-    }
-  }
-
-  doc.font('Helvetica-Bold').fontSize(13).fillColor('#1a365d')
-     .text(escola.toUpperCase(), 50, startY, { width: 495, align: 'center' });
-
-  doc.font('Helvetica').fontSize(9).fillColor('#4a5568')
-     .text(`INEP: ${inep}  |  CNPJ: ${cnpj}`, 50, doc.y + 2, { width: 495, align: 'center' })
-     .text(endereco, 50, doc.y + 2, { width: 495, align: 'center' });
-
-  startY = doc.y + 10;
-
-  doc.roundedRect(50, startY, 495, 66, 6).lineWidth(0.8).stroke('#cbd5e0');
-
-  doc.font('Helvetica-Bold').fontSize(9.5).fillColor('#1a365d')
-     .text(`Professora: `, 62, startY + 10, { continued: true })
-     .font('Helvetica').fillColor('#2d3748')
-     .text(`${professora}    |    `, { continued: true })
-     .font('Helvetica-Bold').fillColor('#1a365d')
-     .text(`Turma: `, { continued: true })
-     .font('Helvetica').fillColor('#2d3748')
-     .text(`${turma}    |    ${unidade.toUpperCase()}`);
-
-  doc.font('Helvetica-Bold').fontSize(9.5).fillColor('#1a365d')
-     .text(`Aluno(a): `, 62, startY + 28, { continued: true })
-     .font('Helvetica').fillColor('#2d3748')
-     .text(`_________________________________________________    `, { continued: true })
-     .font('Helvetica-Bold').fillColor('#1a365d')
-     .text(`Data: `, { continued: true })
-     .font('Helvetica').fillColor('#2d3748')
-     .text(data || '___/___/2026');
-
-  doc.font('Helvetica-Bold').fontSize(9.5).fillColor('#1a365d')
-     .text(`Disciplina: `, 62, startY + 46, { continued: true })
-     .font('Helvetica').fillColor('#2d3748')
-     .text(`${materia || '______________________'}      `, { continued: true })
-     .font('Helvetica-Bold').fillColor('#1a365d')
-     .text(`Valor: `, { continued: true })
-     .font('Helvetica').fillColor('#2d3748')
-     .text(`________      `, { continued: true })
-     .font('Helvetica-Bold').fillColor('#1a365d')
-     .text(`Nota: `, { continued: true })
-     .font('Helvetica').fillColor('#2d3748')
-     .text(`________`);
-
-  doc.font('Helvetica-Bold').fontSize(12).fillColor('#2b6cb0')
-     .text(titulo.toUpperCase(), 50, startY + 80, { width: 495, align: 'center' });
-
-  const regexGabarito = /(?:^|\n)\s*(?:#{1,3}\s*)?(?:\*{1,2})?GABARITO(?:\s+PARA\s+A\s+PROFESSORA)?(?:\*{1,2})?\s*:?\s*(?:\n|$)/i;
-  const partes = texto.split(regexGabarito);
-  const textoQuestoes = partes[0].trim();
-  const textoGabarito = partes.length > 1 ? partes.slice(1).join('\n').trim() : '';
-
-  doc.font('Helvetica').fontSize(11).fillColor('#1e293b')
-     .text(textoQuestoes, 50, doc.y + 14, { width: 495, align: 'left', lineGap: 4 });
-
-  if (incluirGabarito && textoGabarito) {
-    if (doc.y > 620) doc.addPage();
-    const divY = doc.y + 18;
-    doc.moveTo(50, divY).lineTo(545, divY).lineWidth(1).stroke('#cbd5e0');
-
-    doc.font('Helvetica-Bold').fontSize(11).fillColor('#1a365d')
-       .text('GABARITO PARA A PROFESSORA', 50, divY + 12, { width: 495, align: 'left' });
-
-    doc.font('Helvetica').fontSize(10.5).fillColor('#334155')
-       .text(textoGabarito, 50, doc.y + 8, { width: 495, align: 'left', lineGap: 4 });
-  }
-
-  const sufixo = incluirGabarito ? 'com_gabarito' : 'alunos';
-  const nomeBase = (materia || 'avaliacao').toLowerCase().replace(/\s+/g, '_');
-  enviarPdfBuffer(res, doc, `prova_${nomeBase}_${sufixo}.pdf`);
 });
 
 const PORT = 3000;

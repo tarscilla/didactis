@@ -473,3 +473,60 @@ document.getElementById('btnUsarNoRelatorio')?.addEventListener('click', () => {
   }
   navegarPara('view-relatorios');
 });
+
+function iniciarMenuMobile() {
+  const sidebar = document.querySelector('aside, .sidebar');
+  if (!sidebar || document.getElementById('mobile-menu-btn')) return;
+
+  const filhos = Array.from(sidebar.children);
+  if (filhos.length < 2) return;
+
+  filhos.slice(1).forEach((el) => el.classList.add('mobile-nav-collapse'));
+
+  const iconeAbrir = `
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  `;
+
+  const iconeFechar = `
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+      <line x1="6" y1="6" x2="18" y2="18"></line>
+      <line x1="6" y1="18" x2="18" y2="6"></line>
+    </svg>
+  `;
+
+  const btn = document.createElement('button');
+  btn.id = 'mobile-menu-btn';
+  btn.type = 'button';
+  btn.setAttribute('aria-label', 'Abrir menu');
+  btn.innerHTML = iconeAbrir;
+
+  filhos[0].insertAdjacentElement('afterend', btn);
+
+  const fecharMenu = () => {
+    sidebar.classList.remove('menu-open');
+    btn.innerHTML = iconeAbrir;
+    btn.setAttribute('aria-label', 'Abrir menu');
+    document.body.style.overflow = '';
+  };
+
+  btn.addEventListener('click', () => {
+    const abriu = sidebar.classList.toggle('menu-open');
+    btn.innerHTML = abriu ? iconeFechar : iconeAbrir;
+    btn.setAttribute('aria-label', abriu ? 'Fechar menu' : 'Abrir menu');
+    document.body.style.overflow = abriu ? 'hidden' : '';
+  });
+
+  sidebar.querySelectorAll('.mobile-nav-collapse a, .mobile-nav-collapse button').forEach((item) => {
+    item.addEventListener('click', fecharMenu);
+  });
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', iniciarMenuMobile);
+} else {
+  iniciarMenuMobile();
+}
