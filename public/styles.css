@@ -523,3 +523,58 @@ button:disabled {
     flex-direction: column !important;
   }
 }
+
+@media (max-width: 768px) {
+  .chat-container,
+  .chat-box,
+  .chat-wrapper,
+  #chat-container {
+    height: auto !important;
+    min-height: 62dvh !important;
+    max-height: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .chat-messages,
+  .messages,
+  #chat-messages {
+    flex: 1 1 auto !important;
+    max-height: 52dvh !important;
+    overflow-y: auto !important;
+  }
+
+  .chat-input-area,
+  .chat-form,
+  .input-group,
+  #chat-form {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 8px !important;
+    width: 100% !important;
+    padding: 10px 0 4px !important;
+    box-sizing: border-box !important;
+  }
+
+  .chat-input-area input,
+  .chat-input-area textarea,
+  .chat-form input,
+  .chat-form textarea,
+  #chat-input {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    font-size: 16px !important;
+    box-sizing: border-box !important;
+  }
+
+  .chat-input-area button,
+  .chat-form button,
+  #chat-send-btn {
+    flex: 0 0 auto !important;
+    width: auto !important;
+    padding: 12px 16px !important;
+    white-space: nowrap !important;
+  }
+}
